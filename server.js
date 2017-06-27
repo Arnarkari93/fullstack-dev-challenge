@@ -22,7 +22,8 @@ app.get("/interests", (req, res) => {
     initialAmount,
     interestCalculation,
     interestRate,
-    monthlySavings
+    monthlySavings,
+    years
   } = getInterestQueryParams(req.query);
 
   // Create array where each entry represents a month.
@@ -30,28 +31,27 @@ app.get("/interests", (req, res) => {
 
   let amount = +initialAmount;
   // Calculate savings each month for 50 years.
-  for (let i = 0; i < 12 * 50; i++) {
+  for (let i = 1; i < 12 * years; i++) {
     // calculate interest rate
+    amount += +monthlySavings;
     switch (interestCalculation) {
       case "Monthly": {
         amount = amount * interestRate;
         break;
       }
       case "Quarterly": {
-        if (i !== 0 && i % 3 === 0) {
+        if (i % 3 === 0) {
           amount = amount * interestRate;
         }
         break;
       }
       case "Annually":
       default:
-        if (i !== 0 && i % 12 === 0) {
+        if (i % (12 - 1) === 0) {
           amount = amount * interestRate;
         }
     }
-
-    amount += +monthlySavings;
-    interestArr.push(amount);
+    interestArr.push(+amount.toPrecision(4));
   }
 
   res.send(interestArr);
@@ -74,9 +74,19 @@ function getInterestQueryParams(queryParams) {
     ? queryParams["interestCalculation"]
     : "Annually";
 
-  return { initialAmount, monthlySavings, interestRate, interestCalculation };
+  const years = queryParams["years"] ? queryParams["years"] : 1;
+
+  return {
+    initialAmount,
+    monthlySavings,
+    interestRate,
+    interestCalculation,
+    years
+  };
 }
 
-app.listen(app.get("port"), () => {
+const server = app.listen(app.get("port"), () => {
   console.log(`Find the server at: http://localhost:${app.get("port")}/`); // eslint-disable-line no-console
 });
+
+module.exports = server;
